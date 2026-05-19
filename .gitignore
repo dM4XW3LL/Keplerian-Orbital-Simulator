@@ -1,0 +1,70 @@
+#Compiled C library
+kepler.so
+kepler.dylib
+kepler.dll
+
+#PyInstaller output
+dist/
+build/
+*.spec
+
+#Python bytecode
+__pycache__/
+*.pyc
+*.puo
+cat > .gitignore << 'EOF'
+#Compiled C library
+kepler.so
+kepler.dylib
+kepler.dll
+
+#PyInstaller output
+dist/
+build/
+*.spec
+
+#Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+
+cat > .gitignore << 'EOF'
+#Compiled C library
+kepler.so
+kepler.dylib
+kepler.dll
+
+#PyInstaller output
+dist/
+build/
+*.spec
+
+#Python bytecode
+__pycache__/
+*.pyc
+*.puo
+cat > .gitignore << 'EOF'
+#Compiled C library
+kepler.so
+kepler.dylib
+kepler.dll
+
+#PyInstaller output
+dist/
+build/
+*.spec
+
+#Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Data files from simulation runs
+*.dat
+*.gif
+*.mp4
+
+# Editor clutter
+.vscode/
+*.swp
