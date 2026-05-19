@@ -7,7 +7,7 @@ in real time. The physics engine is your compiled C library (kepler.so / .dylib)
 called via ctypes. The GUI is built with tkinter + matplotlib embedded.
 
 Usage:
-    make          # compile kepler.so first
+    make          # compile kepler.so first or gcc -O2 -fPIC -shared -o kepler.dll kepler.c -lm
     python3 orbit_sim.py
 """
 
