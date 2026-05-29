@@ -33,7 +33,11 @@ from matplotlib.animation import FuncAnimation
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_kepler_lib():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    #Check if running inside a PyInstaller executable bundle
+    if getattr(sys,'frozen',False) and hasattr(sys,'_MEIPASS'):
+        script_dir = sys._MEIPASS
+    else:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
     system = platform.system()
 
     if system == "Windows":
