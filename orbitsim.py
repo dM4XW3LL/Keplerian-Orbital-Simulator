@@ -365,7 +365,7 @@ class OrbitSimApp(tk.Tk):
         tk.Label(mass_row,text="Star Mass(M☉)",fg=TEXT_DIM,
                 bg=BG_PANEL, font=FONT_LABEL).pack(side="left")
         self.star_mass_var=tk.StringVar(value='1.0')
-        mass_entry = tk.Entry(mass_row,textvariable=self.star_mass_var,font=FONT_MONO,bg=BG_WIDGET,fg=TEXT_MAIN,insertbackground=ACCENT,relief="flat",bd=4,width=8)
+        mass_entry = tk.Entry(mass_row,textvariable=self.star_mass_var,font=FONT_MONO,bg=BG_WIDGET,fg=TEXT_MAIN,insertbackground=ACCENT,relief="flat",bd=4,width=8).pack(side="left",padx=4)
         tk.Button(mass_row,text="Apply",font=FONT_SMALL,bg=BG_WIDGET,fg=ACCENT,activebackground=BORDER,relief="flat",cursor="hand2",command=self._on_star_mass_changed).pack(side="left")
 
         # Speed slider
@@ -469,7 +469,7 @@ class OrbitSimApp(tk.Tk):
         ax.set_ylim(-12, 12)
 
     def _draw_sun(self):
-        self._sun_dot = self.ax.plot(0, 0, "o", color=SUN_COLOR, markersize=12,
+        self._sun_dot, = self.ax.plot(0, 0, "o", color=SUN_COLOR, markersize=12,
                      zorder=10, label="Sun", markeredgewidth=0)
         # Soft glow
         for r, a in [(18, 0.06), (12, 0.10), (7, 0.18)]:
@@ -527,7 +527,7 @@ class OrbitSimApp(tk.Tk):
             a = float(self._params["a"].get())
             M = float(self.star_mass_var.get())
             if a > 0 and M>0:
-                self._params["period"].set(f"{a**1.5:.4f}")
+                self._params["period"].set(f"{a**1.5/M**0.5:.4f}")
         except ValueError:
             pass
 
