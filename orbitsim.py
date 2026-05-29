@@ -229,6 +229,7 @@ class OrbitSimApp(tk.Tk):
 
         # Simulation state
         self.bodies: list[Body] = []
+        self.star_mass_var = tk.DoubleVar(value = 1.0) #Mass of the Star in Solar Mass Units
         self.t_years  = 0.0            # current simulation time
         self.running  = False          # animation on/off
         self._anim_id = None           # after() id
@@ -353,6 +354,16 @@ class OrbitSimApp(tk.Tk):
             command=self._reset_time
         ).pack(side="left")
 
+        # Star Mass Controller Slider
+        self._add_param_row(sec3, "Star mass (M☉)", "star_mass", "float", "1.0")
+        mass_row = tk.Frame(sec3,bg=BG_PANEL)
+        mass_row.pack(fill="x",padx=8,pady=(0,6))
+        tk.Label(mass_row,text="Star Mass(M☉)",fg=TEXT_DIM,
+                bg=BG_PANEL, font=FONT_LABEL).pack(side="left")
+        self.star_mass_var=tk.StringVar(value='1.0')
+        mass_entry = tk.Entry(mass_row,textvariable=self.star_mass_var,font=FONT_MONO,bg=BG_WIDGET,fg=TEXT_MAIN,insertbackground=ACCENT,relief="flat",bd=4,width=8)
+        tk.Button(mass_row,text="Apply",font=FONT_SMALL,bg=BG_WIDGET,fg=ACCENT,activebackground=BORDER,relief="flat",cursor="hand2",command=self._on_star_mass_changed).pack(side="left")
+
         # Speed slider
         spd_row = tk.Frame(sec3, bg=BG_PANEL)
         spd_row.pack(fill="x", padx=8, pady=(4,2))
@@ -454,7 +465,7 @@ class OrbitSimApp(tk.Tk):
         ax.set_ylim(-12, 12)
 
     def _draw_sun(self):
-        self.ax.plot(0, 0, "o", color=SUN_COLOR, markersize=12,
+        self._sun_dot = self.ax.plot(0, 0, "o", color=SUN_COLOR, markersize=12,
                      zorder=10, label="Sun", markeredgewidth=0)
         # Soft glow
         for r, a in [(18, 0.06), (12, 0.10), (7, 0.18)]:
@@ -510,7 +521,8 @@ class OrbitSimApp(tk.Tk):
             return
         try:
             a = float(self._params["a"].get())
-            if a > 0:
+            M = float(self.star_mass_var.get())
+            if a > 0 and M>0:
                 self._params["period"].set(f"{a**1.5:.4f}")
         except ValueError:
             pass
@@ -522,8 +534,9 @@ class OrbitSimApp(tk.Tk):
             return
         try:
             period = float(self._params["period"].get())
-            if period > 0:
-                self._params["a"].set(f"{period**(2/3):.4f}")
+            M = float(self.star_mass_var.get())
+            if period > 0 and M>0:
+                self._params["a"].set(f"{(period*M**0.5)**(2/3):.4f}")
         except ValueError:
             pass
     
@@ -598,6 +611,25 @@ class OrbitSimApp(tk.Tk):
         self._refresh_body_list()
         self._update_axes_limits()
         self.canvas.draw_idle()
+
+    #Star Mass changed
+    def _on_star_mass_changed(self,_event=None):
+        try:
+            M=float(self.star_mass_var.get())
+            if M<=0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Invalid Star Mass","Star Mass must be a positive number (in solar masses).")
+            return
+        
+        for body in self.bodies:
+            body.period = body.a**1.5/M**0.5
+
+        self._refresh_body_list()
+        sun_size = 8 + 4 *M**0.3
+        self._sun_dot.set_markersize(sun_size)
+        self.canvas.draw_idle()
+        self._autofill_period()
 
     def _add_body_to_plot(self, body: Body):
         """Create matplotlib artists for a new body."""

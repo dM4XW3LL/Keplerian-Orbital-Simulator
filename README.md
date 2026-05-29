@@ -6,11 +6,12 @@ A real-time orbital mechanics simulator using Kepler's equation.
 shared library, called from a Python/Tkinter GUI via `ctypes`.
 
 ## Features
-- Spawn arbitrary Keplerian orbits around the Sun
+- Spawn arbitrary Keplerian orbits around the Sun or any star
 - Built-in presets for all solar system planets
 - Adjustable simulation speed and trail length
 - Auto-fills orbital period via Kepler's 3rd law
 - Auto-fills semi-major axis via Kepler's 3rd law
+- Change the stellar object mass and auto-update orbit periods accordingly
 
 ## Build & Run
 ```bash
