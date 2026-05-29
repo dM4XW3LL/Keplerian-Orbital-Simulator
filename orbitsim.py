@@ -320,6 +320,9 @@ class OrbitSimApp(tk.Tk):
         # Trace 'a' to auto-update period
         self._params["a"].trace_add("write", self._autofill_period)
 
+        # Trace 'period' to auto-update semi-major axis 'a'
+        self._params["period"].trace_add("write", self._autofill_semimajoraxis)
+
         # ── Spawn button ───────────────────────────────────────────────────
         tk.Button(
             panel, text="  ＋  SPAWN BODY",
@@ -511,6 +514,19 @@ class OrbitSimApp(tk.Tk):
                 self._params["period"].set(f"{a**1.5:.4f}")
         except ValueError:
             pass
+
+    def _autofill_semimajoraxis(self, *_):
+        """Auto-fill semi-major axis via Kepler's 3rd law: P = a^1.5  -> a = P^(2/3)(in solar units)."""
+        # Only auto-fill when in "Custom" preset mode
+        if self._preset_var.get() not in ("── Custom ──", ""):
+            return
+        try:
+            period = float(self._params["period"].get())
+            if period > 0:
+                self._params["a"].set(f"{period**(2/3):.4f}")
+        except ValueError:
+            pass
+    
 
     def _on_preset_selected(self, _event=None):
         name = self._preset_var.get()
