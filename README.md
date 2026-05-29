@@ -10,6 +10,7 @@ shared library, called from a Python/Tkinter GUI via `ctypes`.
 - Built-in presets for all solar system planets
 - Adjustable simulation speed and trail length
 - Auto-fills orbital period via Kepler's 3rd law
+- Auto-fills semi-major axis via Kepler's 3rd law
 
 ## Build & Run
 ```bash
