@@ -14,7 +14,8 @@ UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
     # macOS
     LIB     = kepler.dylib
-    LDFLAGS = -shared -lm -Wl,--export-dynamic
+    # Removed --export-dynamic and changed -shared to -dynamiclib
+    LDFLAGS = -dynamiclib -lm
 else
     # Linux (default)
     LIB     = kepler.so
