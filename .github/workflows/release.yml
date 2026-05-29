@@ -1,4 +1,4 @@
-name: Build and Attach Release Binaries
+name: Build and Attach Release Binaries and Executables
 
 on:
   release:
@@ -8,37 +8,55 @@ permissions:
   contents: write
 
 jobs:
-  build-binaries:
+  build-artifacts:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: kepler.so
+            executable_name: orbit_sim_linux
+            c_lib: kepler.so
           - os: macos-latest
-            artifact_name: kepler.dylib
+            executable_name: orbit_sim_mac
+            c_lib: kepler.dylib
           - os: windows-latest
-            artifact_name: kepler.dll
+            executable_name: orbit_sim_windows.exe
+            c_lib: kepler.dll
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Linux and macOS use your Makefile
-      - name: Build Library (Linux / macOS)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      # Build the C library first so PyInstaller can find it
+      - name: Build C Library (Linux / macOS)
         if: matrix.os != 'windows-latest'
         run: make
 
-      # Windows uses the GCC command from your Python error message
-      - name: Build Library (Windows)
+      # Windows uses the GCC command
+      - name: Build C Library (Windows)
         if: matrix.os == 'windows-latest'
         run: gcc -O2 -fPIC -shared -o kepler.dll kepler.c
 
-      # Upload the compiled file directly to the GitHub Release
-      - name: Upload Binary to Release
+      # Bundle the Python script and C library into one executable
+      - name: Build Executable with PyInstaller
+        run: |
+          pyinstaller --onefile --name=${{ matrix.executable_name }} --add-data "${{ matrix.c_lib }}:." orbit_sim.py
+
+      # Upload BOTH the raw C library and the compiled PyInstaller executable
+      - name: Upload Artifacts to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.artifact_name }}
+          files: |
+            ${{ matrix.c_lib }}
+            dist/${{ matrix.executable_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
