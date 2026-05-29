@@ -1,0 +1,41 @@
+name: Build and Attach Release Binaries
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-binaries:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: kepler.so
+          - os: macos-latest
+            artifact_name: kepler.dylib
+          - os: windows-latest
+            artifact_name: kepler.dll
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Linux and macOS use your Makefile
+      - name: Build Library (Linux / macOS)
+        if: matrix.os != 'windows-latest'
+        run: make
+
+      # Windows uses the GCC command from your Python error message
+      - name: Build Library (Windows)
+        if: matrix.os == 'windows-latest'
+        run: gcc -O2 -fPIC -shared -o kepler.dll kepler.c
+
+      # Upload the compiled file directly to the GitHub Release
+      - name: Upload Binary to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
