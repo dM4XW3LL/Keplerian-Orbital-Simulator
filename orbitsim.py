@@ -233,7 +233,6 @@ class OrbitSimApp(tk.Tk):
 
         # Simulation state
         self.bodies: list[Body] = []
-        self.star_mass_var = tk.DoubleVar(value = 1.0) #Mass of the Star in Solar Mass Units
         self.t_years  = 0.0            # current simulation time
         self.running  = False          # animation on/off
         self._anim_id = None           # after() id
@@ -359,13 +358,13 @@ class OrbitSimApp(tk.Tk):
         ).pack(side="left")
 
         # Star Mass Controller Slider
-        self._add_param_row(sec3, "Star mass (M☉)", "star_mass", "float", "1.0")
         mass_row = tk.Frame(sec3,bg=BG_PANEL)
         mass_row.pack(fill="x",padx=8,pady=(0,6))
         tk.Label(mass_row,text="Star Mass(M☉)",fg=TEXT_DIM,
                 bg=BG_PANEL, font=FONT_LABEL).pack(side="left")
         self.star_mass_var=tk.StringVar(value='1.0')
-        mass_entry = tk.Entry(mass_row,textvariable=self.star_mass_var,font=FONT_MONO,bg=BG_WIDGET,fg=TEXT_MAIN,insertbackground=ACCENT,relief="flat",bd=4,width=8).pack(side="left",padx=4)
+        mass_entry = tk.Entry(mass_row,textvariable=self.star_mass_var,font=FONT_MONO,bg=BG_WIDGET,fg=TEXT_MAIN,insertbackground=ACCENT,relief="flat",bd=4,width=8)
+        mass_entry.pack(side="left",padx=4)
         tk.Button(mass_row,text="Apply",font=FONT_SMALL,bg=BG_WIDGET,fg=ACCENT,activebackground=BORDER,relief="flat",cursor="hand2",command=self._on_star_mass_changed).pack(side="left")
 
         # Speed slider
