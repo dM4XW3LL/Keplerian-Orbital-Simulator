@@ -49,7 +49,7 @@ jobs:
       # Bundle the Python script and C library into one executable
       - name: Build Executable with PyInstaller
         run: |
-          pyinstaller --onefile --name=${{ matrix.executable_name }} --add-data "${{ matrix.c_lib }}:." orbit_sim.py
+          pyinstaller --onefile --name=${{ matrix.executable_name }} --add-data "${{ matrix.c_lib }}:." orbitsim.py
 
       # Upload BOTH the raw C library and the compiled PyInstaller executable
       - name: Upload Artifacts to Release
