@@ -37,6 +37,7 @@ jobs:
         run: |
           pip install numpy
           pip install matplotlib
+          pip install pillow
           pip install pyinstaller
 
       # Build the C library first so PyInstaller can find it
@@ -52,7 +53,7 @@ jobs:
       # Bundle the Python script and C library into one executable
       - name: Build Executable with PyInstaller
         run: |
-          pyinstaller --onefile --name=${{ matrix.executable_name }} --add-data "${{ matrix.c_lib }}:." orbitsim.py
+          pyinstaller --onefile --name=${{ matrix.executable_name }} --hidden-import="PIL._tkinter_finder" --add-data "${{ matrix.c_lib }}:." orbitsim.py
 
       # Upload BOTH the raw C library and the compiled PyInstaller executable
       - name: Upload Artifacts to Release
