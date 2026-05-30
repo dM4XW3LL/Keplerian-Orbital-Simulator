@@ -33,8 +33,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install PyInstaller
-        run: pip install pyinstaller
+      - name: Install Dependencies on PyInstaller
+        run: |
+          pip install numpy
+          pip install pyinstaller
 
       # Build the C library first so PyInstaller can find it
       - name: Build C Library (Linux / macOS)
