@@ -23,6 +23,9 @@ Namely the solutions to kepler's equation using both fixed point and newton iter
 #define M_PI 3.14159265358979323846
 #endif
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Kepler's Equation solvers
+   ───────────────────────────────────────────────────────────────────────────*/
 
 
 
@@ -57,6 +60,10 @@ double kepler_fixed_point(double M, double e, int *iter_count);
 double kepler_newton(double M, double e, int *iter_count);
 
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Anomaly conversions
+   ───────────────────────────────────────────────────────────────────────────*/
+
 /**
  * @brief Converts eccentric anomaly E to true anomaly f.
  * 
@@ -68,6 +75,32 @@ double kepler_newton(double M, double e, int *iter_count);
  * @return double True Anomaly
  */
 double eccentric_to_true(double e, double E);
+
+/**
+ * @brief Combines mean_anomaly_at_time, kepler_newton, and eccentric_to_true to return the true anomaly at time t.
+ * 
+ * @param t_years Time in years after initial instant
+ * @param period  Period of the orbit in years
+ * @param M0    Initial Mean Anomaly
+ * @param e     Eccentricity of the orbit
+ * @param iter_count Iteration count -> Remnant of the code
+ * @return double True anomaly at time t
+ */
+double true_anomaly_at_time(double t_years, double period, double M0, double e, int *iter_count);
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbital geometry
+   ───────────────────────────────────────────────────────────────────────────*/
+/**
+ * @brief 
+ * 
+ * @param f 
+ * @param a 
+ * @param e 
+ * @return double 
+ */
+double orbit_radius(double f, double a, double e);
 
 /**
  * @brief Computes (x,y) position from true anomaly f, semi-major axis a and eccentricity e.
@@ -82,6 +115,11 @@ double eccentric_to_true(double e, double E);
  * @param y Position y = r*cos(f)
  */
 void orbit_position(double f, double a, double e, double *x, double *y);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mean anomaly helpers
+   ───────────────────────────────────────────────────────────────────────────*/
+
 
 
 /**
@@ -113,6 +151,62 @@ double initial_mean_anomaly(double lambda, double phi0, double years_before_epoc
  * @return double Mean Anomaly after time t_years
  */
 double mean_anomaly_at_time(double t_years, double period, double M0);
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbital velocity — vis-viva equation
+   ───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * @brief 
+ * 
+ * @param r 
+ * @param a 
+ * @param M_Star 
+ * @return double 
+ */
+double orbital_velocity_au_yr(double r, double a,double M_Star);
+
+
+/**
+ * @brief 
+ * 
+ * @param r 
+ * @param a 
+ * @param M_Star 
+ * @return double 
+ */
+double orbital_velocity_km_s(double r, double a, double M_Star);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbit progress tracking
+   ───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * @brief 
+ * 
+ * @param t_years 
+ * @param period 
+ * @param M0 
+ * @return double 
+ */
+double time_in_current_orbit(double t_years, double period, double M0);
+
+
+/**
+ * @brief 
+ * 
+ * @param t_years 
+ * @param period 
+ * @param M0 
+ * @return double 
+ */
+double orbit_progress(double t_years, double period, double M0);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Composite helpers
+   ───────────────────────────────────────────────────────────────────────────*/
+
 
 /**
  * @brief Compute (x, y) position of a planet at time t_years.
