@@ -18,7 +18,8 @@ import ctypes
 import math
 import time
 import tkinter as tk
-from tkinter import ttk, messagebox, colorchooser
+from tkinter import ttk, messagebox, colorchooser, filedialog
+import json
 import numpy as np
 import matplotlib
 matplotlib.use("TkAgg")
@@ -84,9 +85,22 @@ def _setup_lib_signatures(lib):
     lib.mean_anomaly_at_time.argtypes = [dbl, dbl, dbl]
     lib.mean_anomaly_at_time.restype  = dbl
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  2. JSON template directory loading
+# ─────────────────────────────────────────────────────────────────────────────
+def _get_user_data_dir():
+    system = platform.system()
+    if system == "Windows":
+        base = os.environ.get("APPDATA", os.path.expanduser("~"))
+        path = os.path.join(base, "KeplerSim")
+    else:
+        path = os.path.join(os.path.expanduser("~"), ".kepler_sim")
+    os.makedirs(path, exist_ok=True)
+    return path
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  2. Pure-Python wrappers (thin, but ergonomic)
+#  3. Pure-Python wrappers (thin, but ergonomic)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class KeplerEngine:
@@ -144,7 +158,7 @@ class KeplerEngine:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  3. Data model — one Body per spawned orbit
+#  4. Data model — one Body per spawned orbit
 # ─────────────────────────────────────────────────────────────────────────────
 
 _BODY_COUNTER = 0
@@ -192,7 +206,7 @@ class Body:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  4. Main application window
+#  5. Main application window
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Visual theme ──────────────────────────────────────────────────────────────
@@ -226,8 +240,7 @@ class OrbitSimApp(tk.Tk):
     def __init__(self, lib):
         super().__init__()
         self.engine = KeplerEngine(lib)
-
-        self.title("Kepler Orbit Simulator  v1.0")
+        self._user_data_dir = _get_user_data_dir()    #Loads user data directory to save custom bodies template
         self.configure(bg=BG_DARK)
         self.resizable(True, True)
 
@@ -429,6 +442,28 @@ class OrbitSimApp(tk.Tk):
             relief="flat", cursor="hand2",
             command=self._remove_selected_body
         ).pack(fill="x", padx=8, pady=(0,8))
+
+        preset_btn_row = tk.Frame(sec4, bg=BG_PANEL)
+        preset_btn_row.pack(fill="x", padx=8, pady=(0, 8))
+
+        #JSON template Buttons
+
+        tk.Button(
+            preset_btn_row, text="💾  SAVE",
+            font=FONT_SMALL,
+            bg=BG_WIDGET, fg=GREEN, activebackground=BORDER,
+            relief="flat", cursor="hand2", width=10,
+            command=self._save_presets
+        ).pack(side="left", padx=(0, 4))
+
+        tk.Button(
+            preset_btn_row, text="📂  LOAD",
+            font=FONT_SMALL,
+            bg=BG_WIDGET, fg=ACCENT, activebackground=BORDER,
+            relief="flat", cursor="hand2", width=10,
+            command=self._load_presets
+        ).pack(side="left")
+        
 
         # ── Footer ────────────────────────────────────────────────────────
         tk.Frame(panel, bg=BORDER, height=1).grid(row=row, column=0, sticky="ew"); row += 1
@@ -679,6 +714,94 @@ class OrbitSimApp(tk.Tk):
         self._update_axes_limits()
         self.canvas.draw_idle()
 
+    #JSON handling functions
+    
+    def _save_presets(self):
+        """Saves body and orbit template to a JSON file to be loaded at a later time."""
+        if not self.bodies:
+            messagebox.showinfo("Nothing to save", "Spawn at least one body first.")
+            return
+
+        path = filedialog.asksaveasfilename(
+            title="Save presets",
+            initialdir=self._user_data_dir,
+            defaultextension=".json",
+            filetypes=[("JSON preset files", "*.json"), ("All files", "*.*")],
+            initialfile="my_presets.json",
+        )
+        if not path:
+            return
+        
+        data = []
+        for body in self.bodies:
+            data.append({
+                "name":   body.name,
+                "a":      body.a,
+                "e":      body.e,
+                "period": body.period,
+                "M0_deg": math.degrees(body.M0),
+                "color":  body.color,
+            })
+
+        with open(path, "w") as f:
+            json.dump(data, f, indent=4)
+
+        messagebox.showinfo("Saved", f"Saved {len(data)} preset(s) to:\n{path}")
+
+    def _load_presets(self):
+        path = filedialog.askopenfilename(
+            title="Load presets",
+            initialdir=self._user_data_dir,
+            filetypes=[("JSON preset files", "*.json"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, OSError) as exc:
+            messagebox.showerror("Load failed", f"Could not read file:\n{exc}")
+            return
+
+        spawned = 0
+        errors  = []
+        for i, entry in enumerate(data):
+            try:
+                body = Body(
+                    name   = str(entry["name"]),
+                    a      = float(entry["a"]),
+                    e      = float(entry["e"]),
+                    period = float(entry["period"]),
+                    M0     = math.radians(float(entry["M0_deg"])),
+                    color  = str(entry["color"]),
+                )
+                if body.a <= 0:
+                    raise ValueError("a must be > 0")
+                if not (0.0 <= body.e < 1.0):
+                    raise ValueError("e must be in [0, 1)")
+                if body.period <= 0:
+                    raise ValueError("period must be > 0")
+
+                self._add_body_to_plot(body)
+                self.bodies.append(body)
+                spawned += 1
+
+            except (KeyError, ValueError) as exc:
+                errors.append(f"Entry {i+1} ({entry.get('name','?')}): {exc}")
+
+        self._refresh_body_list()
+        self._update_axes_limits()
+        self.canvas.draw_idle()
+
+        if errors:
+            messagebox.showwarning(
+                "Loaded with errors",
+                f"Spawned {spawned} body/bodies.\n\nSkipped:\n" + "\n".join(errors)
+            )
+        else:
+            messagebox.showinfo("Loaded", f"Spawned {spawned} body/bodies.")
+
     def _refresh_body_list(self):
         self._body_listbox.delete(0, tk.END)
         for b in self.bodies:
@@ -786,7 +909,7 @@ class OrbitSimApp(tk.Tk):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  5. Entry point
+#  6. Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
