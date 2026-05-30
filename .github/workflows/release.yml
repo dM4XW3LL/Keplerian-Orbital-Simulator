@@ -36,6 +36,7 @@ jobs:
       - name: Install Dependencies on PyInstaller
         run: |
           pip install numpy
+          pip install matplotlib
           pip install pyinstaller
 
       # Build the C library first so PyInstaller can find it
