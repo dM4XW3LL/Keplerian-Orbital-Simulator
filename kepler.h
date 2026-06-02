@@ -93,12 +93,14 @@ double true_anomaly_at_time(double t_years, double period, double M0, double e, 
    Orbital geometry
    ───────────────────────────────────────────────────────────────────────────*/
 /**
- * @brief 
+ * @brief Compute the orbital radius (distance from focus to body)
  * 
- * @param f 
- * @param a 
- * @param e 
- * @return double 
+ * Conic section equation: r=a(1-e^2)/(1+e*cos(f))
+ * 
+ * @param f True anomaly (radians)
+ * @param a Semi-major axis (AU)
+ * @param e Orbital eccentricity
+ * @return double Distance from the focus (star) to the body in AU
  */
 double orbit_radius(double f, double a, double e);
 
@@ -158,23 +160,29 @@ double mean_anomaly_at_time(double t_years, double period, double M0);
    ───────────────────────────────────────────────────────────────────────────*/
 
 /**
- * @brief 
+ * @brief Orbital speed in AU/yr via the vis-viva equation.
  * 
- * @param r 
- * @param a 
- * @param M_Star 
- * @return double 
+ * v=sqrt(GM*(2/r - 1/a))
+ * In solar units: GM = 4pi^2*M_star
+ * 
+ * @param r Current distance from star (AU)
+ * @param a Semi-major axis (AU)
+ * @param M_Star Stellar mass (Solar Masses)
+ * @return double Orbital Speed (in AU/yr)
  */
 double orbital_velocity_au_yr(double r, double a,double M_Star);
 
 
 /**
- * @brief 
+ * @brief Orbital speed in km/s via the vis-viva equation
  * 
- * @param r 
- * @param a 
- * @param M_Star 
- * @return double 
+ * Same as orbital_velocity_au_yr, multiplied by the conversion factor
+ * 1 AU/yr = 4.74047 km/s.4
+ * 
+ * @param r Current distance from the star (AU)
+ * @param a Semi-major axis (AU)
+ * @param M_Star Stellar mass (solar masses)
+ * @return double  Orbital speed (km/s)
  */
 double orbital_velocity_km_s(double r, double a, double M_Star);
 
@@ -183,23 +191,29 @@ double orbital_velocity_km_s(double r, double a, double M_Star);
    ───────────────────────────────────────────────────────────────────────────*/
 
 /**
- * @brief 
+ * @brief Time elapsed within the current orbit (years).
  * 
- * @param t_years 
- * @param period 
- * @param M0 
- * @return double 
+ * Accounts for the initial mean anomaly offset M0, then returns
+ * (t - t_offset) mod period, always in [0, period).
+ * 
+ * @param t_years   Current simulation time (years)
+ * @param period    Orbital period (years)
+ * @param M0        Initial mean anomaly (radians)
+ * @return double   Time into the current orbit (years), in [0, period)
  */
 double time_in_current_orbit(double t_years, double period, double M0);
 
 
 /**
- * @brief 
+ * @brief Percentage of the current orbit completed.
  * 
- * @param t_years 
- * @param period 
- * @param M0 
- * @return double 
+ * Returns a value in [0, 100).
+ * 0 = at periapsis start, 50 = halfway, approaching 100 = nearly full orbit.
+ * 
+ * @param t_years    Current simulation time (years)
+ * @param period     Orbital period (years)
+ * @param M0         Initial mean anomaly (radians)
+ * @return double    Orbit completion percentage [0, 100)
  */
 double orbit_progress(double t_years, double period, double M0);
 
