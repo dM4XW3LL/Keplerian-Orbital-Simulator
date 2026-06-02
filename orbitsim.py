@@ -85,6 +85,24 @@ def _setup_lib_signatures(lib):
     lib.mean_anomaly_at_time.argtypes = [dbl, dbl, dbl]
     lib.mean_anomaly_at_time.restype  = dbl
 
+    lib.orbit_radius.argtypes = [dbl,dbl,dbl]
+    lib.orbit_radius.restype = dbl
+
+    lib.true_anomaly_at_time.argtypes    = [dbl, dbl, dbl, dbl, pint]
+    lib.true_anomaly_at_time.restype     = dbl
+
+    lib.orbital_velocity_au_yr.argtypes  = [dbl, dbl, dbl]
+    lib.orbital_velocity_au_yr.restype   = dbl
+
+    lib.orbital_velocity_km_s.argtypes   = [dbl, dbl, dbl]
+    lib.orbital_velocity_km_s.restype    = dbl
+
+    lib.orbit_progress.argtypes          = [dbl, dbl, dbl]
+    lib.orbit_progress.restype           = dbl
+
+    lib.time_in_current_orbit.argtypes   = [dbl, dbl, dbl]
+    lib.time_in_current_orbit.restype    = dbl
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  2. JSON template directory loading
 # ─────────────────────────────────────────────────────────────────────────────
@@ -155,6 +173,47 @@ class KeplerEngine:
             xs.append(x.value)
             ys.append(y.value)
         return np.array(xs), np.array(ys)
+    
+    def true_anomaly_at_time(self, t_years, period, M0, e):
+        iters = ctypes.c_int(0)
+        return self._lib.true_anomaly_at_time(
+            ctypes.c_double(t_years),
+            ctypes.c_double(period),
+            ctypes.c_double(M0),
+            ctypes.c_double(e),
+            ctypes.byref(iters),
+        )
+    
+
+    def orbit_radius(self, f, a, e):
+        return self._lib.orbit_radius(
+            ctypes.c_double(f),
+            ctypes.c_double(a),
+            ctypes.c_double(e),
+        )
+
+    def orbital_velocity_km_s(self, r, a, M_star):
+        return self._lib.orbital_velocity_km_s(
+            ctypes.c_double(r),
+            ctypes.c_double(a),
+            ctypes.c_double(M_star),
+        )
+
+    def orbit_progress(self, t_years, period, M0):
+        return self._lib.orbit_progress(
+            ctypes.c_double(t_years),
+            ctypes.c_double(period),
+            ctypes.c_double(M0),
+        )
+
+    def time_in_current_orbit(self, t_years, period, M0):
+        return self._lib.time_in_current_orbit(
+            ctypes.c_double(t_years),
+            ctypes.c_double(period),
+            ctypes.c_double(M0),
+        )
+
+    
 
 
 # ─────────────────────────────────────────────────────────────────────────────
