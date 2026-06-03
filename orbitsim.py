@@ -1085,6 +1085,7 @@ class OrbitSimApp(tk.Tk):
         prog  = self.engine.orbit_progress(self.t_years, b.period, b.M0)
 
         self._info_dist.configure(text=f"{r:.4f} AU")
+        f_display = math.degrees(f)%360
         self._info_f.configure(text=f"{math.degrees(f):.2f}°")
         self._info_vel.configure(text=f"{v:.2f} km/s")
         self._info_time.configure(text=f"{t_orb:.4f} yr")
