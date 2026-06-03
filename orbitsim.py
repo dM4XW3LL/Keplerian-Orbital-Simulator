@@ -311,6 +311,10 @@ class OrbitSimApp(tk.Tk):
 
         # Selected color for next body
         self._next_color = ACCENT
+        #Selected body for orbital parameter info
+        self._selected_body = None
+        self._info_visible = False
+
 
         self._build_ui()
         self._style_ttk()
@@ -325,13 +329,15 @@ class OrbitSimApp(tk.Tk):
 
     def _build_ui(self):
         """Construct all widgets."""
-        # Root grid: left panel | canvas
+        # Root grid: left panel | canvas | orbital parameters info
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
+        self.columnconfigure(2,weight=0)
         self.rowconfigure(0, weight=1)
 
         self._build_left_panel()
         self._build_canvas()
+        self._build_info_panel()
 
     def _build_left_panel(self):
         panel = tk.Frame(self, bg=BG_PANEL, width=300)
@@ -429,7 +435,7 @@ class OrbitSimApp(tk.Tk):
             command=self._reset_time
         ).pack(side="left")
 
-        # Star Mass Controller Slider
+        # ── Star Mass Controller Slider ────────────────────────────────────
         mass_row = tk.Frame(sec3,bg=BG_PANEL)
         mass_row.pack(fill="x",padx=8,pady=(0,6))
         tk.Label(mass_row,text="Star Mass(M☉)",fg=TEXT_DIM,
@@ -439,7 +445,7 @@ class OrbitSimApp(tk.Tk):
         mass_entry.pack(side="left",padx=4)
         tk.Button(mass_row,text="Apply",font=FONT_SMALL,bg=BG_WIDGET,fg=ACCENT,activebackground=BORDER,relief="flat",cursor="hand2",command=self._on_star_mass_changed).pack(side="left")
 
-        # Speed slider
+        # ── Speed slider ───────────────────────────────────────────────────
         spd_row = tk.Frame(sec3, bg=BG_PANEL)
         spd_row.pack(fill="x", padx=8, pady=(4,2))
         tk.Label(spd_row, text="Speed (days/tick)", fg=TEXT_DIM,
@@ -453,7 +459,7 @@ class OrbitSimApp(tk.Tk):
             showvalue=True, length=130
         ).pack(side="left", padx=6)
 
-        # Trail length slider
+        # ── Trail length slider ────────────────────────────────────────────
         trail_row = tk.Frame(sec3, bg=BG_PANEL)
         trail_row.pack(fill="x", padx=8, pady=(0,6))
         tk.Label(trail_row, text="Trail length (days)", fg=TEXT_DIM,
@@ -493,6 +499,19 @@ class OrbitSimApp(tk.Tk):
         )
         self._body_listbox.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=self._body_listbox.yview)
+        # Body selection in list for orbital parameters
+        self._body_listbox.bind("<<ListboxSelect>>",self._on_body_selected)
+
+        # Small toggle for showing orbital parameter info
+        self._info_toggle_btn = tk.Button(
+            sec4, text="i SHOW ORBITAL INFO",
+            font = FONT_SMALL,
+            bg = BG_WIDGET, fg = ACCENT, activebackground=BORDER,
+            relief="flat", cursor="hand2",
+            command=self._toggle_info_panel
+        )
+
+        self._info_toggle_btn.pack(fill="x",padx=8,pady=(0,4))
 
         tk.Button(
             sec4, text="✕  REMOVE SELECTED",
@@ -505,7 +524,7 @@ class OrbitSimApp(tk.Tk):
         preset_btn_row = tk.Frame(sec4, bg=BG_PANEL)
         preset_btn_row.pack(fill="x", padx=8, pady=(0, 8))
 
-        #JSON template Buttons
+        # ── JSON template Buttons ──────────────────────────────────────────
 
         tk.Button(
             preset_btn_row, text="💾  SAVE",
@@ -545,6 +564,78 @@ class OrbitSimApp(tk.Tk):
         self.canvas = FigureCanvasTkAgg(self.fig, master=canvas_frame)
         self.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
         self.canvas.draw()
+
+
+    def _build_info_panel(self):
+        """Build the collapsible orbital info panel (column 2)"""
+        self._info_frame = tk.Frame(self,bg=BG_PANEL,width=20)
+        #Initially it should have no grid -> Start collapsed
+        self._info_frame.columnconfigure(0,weight=1)
+
+        #Header
+        tk.Label(
+            self._info_frame, text = "ORBITAL PARAMETERS INFO",
+            font=("Courier New",11,"bold"),
+            fg=ACCENT, bg=BG_PANEL, pady=8
+        ).pack(fill="x")
+        tk.Frame(self._info_frame, bg=BORDER, height=1).pack(fill="x")
+
+        #Helper to make one info row: label on left, value on right
+        def info_row(parent,label):
+            row = tk.Frame(parent, bg=BG_PANEL)
+            row.pack(fill="x",padx=12,pady=2)
+            tk.Label(
+                row, text=label, fg=TEXT_DIM, bg=BG_PANEL,
+                font=FONT_LABEL, width=14, anchor="w"     
+                ).pack(side="left")
+            
+            val = tk.Label(row, text="—", fg=TEXT_MAIN, bg=BG_PANEL, font=FONT_MONO, anchor="w")
+            val.pack(side="left")
+            return val
+        
+        def divider(parent):
+            tk.Frame(parent,bg=BORDER, height=1).pack(fill="x", padx=12, pady=4)
+
+        # ——— Static Parameters —————————————————————————————————————————————
+
+        tk.Label(self._info_frame, text=" ELEMENTS", fg=TEXT_DIM, bg=BG_WIDGET,
+                font=("Courier New", 8, "bold"),
+                anchor = "w", pady=8
+                ).pack(fill="x")
+        
+        self._info_name = info_row(self._info_frame, "Name")
+        self._info_a = info_row(self._info_frame, "Semi-major a")
+        self._info_e = info_row(self._info_frame, "Eccentricity")
+        self._info_period = info_row(self._info_frame, "Period")
+        self._info_M0 = info_row(self._info_frame, "M₀")
+
+        divider(self._info_frame)
+
+        # ——— Dynamic Parameters ————————————————————————————————————————————
+
+        tk.Label(self._info_frame, text = " DYNAMIC", fg=TEXT_DIM,
+                bg=BG_WIDGET, font=("Courier New",8,"bold"),
+                anchor="w",pady=3
+                ).pack(fill="x")
+        
+        self._info_dist = info_row(self._info_frame, "Distance")
+        self._info_f = info_row(self._info_frame, "True Anomaly")
+        self._info_vel = info_row(self._info_frame, "Velocity")
+        self._info_time = info_row(self._info_frame, "Orbit time")
+        self._info_prog = info_row(self._info_frame, "Progress")
+
+        divider(self._info_frame)
+
+        # ——— No selection placeholder ——————————————————————————————————————
+
+        self._info_placeholder = tk.Label(
+            self._info_frame,
+            text="Click a body in the\nlist to inspect it.",
+            fg=TEXT_DIM, bg=BG_PANEL,
+            font=FONT_SMALL, justify="center",pady=10
+        )
+        self._info_placeholder.pack()
+
 
     def _setup_axes(self):
         ax = self.ax
@@ -709,7 +800,7 @@ class OrbitSimApp(tk.Tk):
         self._update_axes_limits()
         self.canvas.draw_idle()
 
-    #Star Mass changed
+    # ——— Stellar Mass Change ———————————————————————————————————————————————
     def _on_star_mass_changed(self,_event=None):
         try:
             M=float(self.star_mass_var.get())
@@ -772,6 +863,28 @@ class OrbitSimApp(tk.Tk):
         self._refresh_body_list()
         self._update_axes_limits()
         self.canvas.draw_idle()
+
+
+    def _on_body_selected(self, _event=None):
+        """Called when user clicks a body in the listbox to observe orbital parameter information"""
+
+        sel = self._body_listbox.curselection()
+        if not sel:
+            self._selected_body = None
+            self._info_placeholder.pack()
+            return
+        self._selected_body = self.bodies[sel[0]]
+        self._info_placeholder.pack_forget()
+        #Populate static fields immediatly
+        b = self._selected_body
+        self._info_name.configure(text=b.name)
+        self._info_a.configure(text=f"{b.a:.4f} AU")
+        self._info_e.configure(text=f"{b.e:.5f}")
+        self._info_period.configure(text=f"{b.period:.4f} yr")
+        self._info_M0.configure(text=f"{math.degrees(b.M0):.2f}°")
+
+        # Live fields will update on next _tick
+
 
     #JSON handling functions
     
@@ -899,6 +1012,18 @@ class OrbitSimApp(tk.Tk):
             self.after_cancel(self._anim_id)
             self._anim_id = None
 
+    def _toggle_info_panel(self):
+        """Show or hide the info panel."""
+        if self._info_visible:
+            self._info_frame.grid_forget()
+            self._info_visible = False
+            self._info_toggle_btn.configure(text="ℹ  SHOW ORBITAL INFO")
+        else:
+            self._info_frame.grid(row=0, column=2, sticky="nsew", padx=(0,4), pady=4)
+            self._info_frame.grid_propagate(False)
+            self._info_visible = True
+            self._info_toggle_btn.configure(text="ℹ  HIDE ORBITAL INFO")
+
     def _tick(self):
         if not self.running:
             return
@@ -931,9 +1056,39 @@ class OrbitSimApp(tk.Tk):
                 body.label_text.set_position((x, y + 0.08))
 
         self._time_label.configure(text=f"t = {self.t_years:.4f} yr")
+        self._update_info_panel()
         self.canvas.draw_idle()
 
         self._anim_id = self.after(self.ANIM_INTERVAL, self._tick)
+
+    
+    def _update_info_panel(self):
+        """Recompute and display live orbital quantities. Called every tick."""
+        if not self._info_visible or self._selected_body is None:
+            return
+        b = self._selected_body
+        try:
+            M_star = float(self.star_mass_var.get())
+        except ValueError:
+            M_star = 1.0
+
+        # Get current true anomaly from C
+        f = self.engine.true_anomaly_at_time(
+            self.t_years, b.period, b.M0, b.e
+        )
+        # Get current distance from C
+        r = self.engine.orbit_radius(f, b.a, b.e)
+        # Get velocity from C
+        v = self.engine.orbital_velocity_km_s(r, b.a, M_star)
+        # Get orbit time and progress from C
+        t_orb = self.engine.time_in_current_orbit(self.t_years, b.period, b.M0)
+        prog  = self.engine.orbit_progress(self.t_years, b.period, b.M0)
+
+        self._info_dist.configure(text=f"{r:.4f} AU")
+        self._info_f.configure(text=f"{math.degrees(f):.2f}°")
+        self._info_vel.configure(text=f"{v:.2f} km/s")
+        self._info_time.configure(text=f"{t_orb:.4f} yr")
+        self._info_prog.configure(text=f"{prog:.2f} %")
 
     def _reset_time(self):
         was_running = self.running
