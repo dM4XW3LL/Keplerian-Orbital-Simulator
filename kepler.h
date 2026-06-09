@@ -23,6 +23,9 @@ Namely the solutions to kepler's equation using both fixed point and newton iter
 #define M_PI 3.14159265358979323846
 #endif
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Kepler's Equation solvers
+   ───────────────────────────────────────────────────────────────────────────*/
 
 
 
@@ -57,6 +60,10 @@ double kepler_fixed_point(double M, double e, int *iter_count);
 double kepler_newton(double M, double e, int *iter_count);
 
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Anomaly conversions
+   ───────────────────────────────────────────────────────────────────────────*/
+
 /**
  * @brief Converts eccentric anomaly E to true anomaly f.
  * 
@@ -68,6 +75,34 @@ double kepler_newton(double M, double e, int *iter_count);
  * @return double True Anomaly
  */
 double eccentric_to_true(double e, double E);
+
+/**
+ * @brief Combines mean_anomaly_at_time, kepler_newton, and eccentric_to_true to return the true anomaly at time t.
+ * 
+ * @param t_years Time in years after initial instant
+ * @param period  Period of the orbit in years
+ * @param M0    Initial Mean Anomaly
+ * @param e     Eccentricity of the orbit
+ * @param iter_count Iteration count -> Remnant of the code
+ * @return double True anomaly at time t
+ */
+double true_anomaly_at_time(double t_years, double period, double M0, double e, int *iter_count);
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbital geometry
+   ───────────────────────────────────────────────────────────────────────────*/
+/**
+ * @brief Compute the orbital radius (distance from focus to body)
+ * 
+ * Conic section equation: r=a(1-e^2)/(1+e*cos(f))
+ * 
+ * @param f True anomaly (radians)
+ * @param a Semi-major axis (AU)
+ * @param e Orbital eccentricity
+ * @return double Distance from the focus (star) to the body in AU
+ */
+double orbit_radius(double f, double a, double e);
 
 /**
  * @brief Computes (x,y) position from true anomaly f, semi-major axis a and eccentricity e.
@@ -82,6 +117,11 @@ double eccentric_to_true(double e, double E);
  * @param y Position y = r*cos(f)
  */
 void orbit_position(double f, double a, double e, double *x, double *y);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mean anomaly helpers
+   ───────────────────────────────────────────────────────────────────────────*/
+
 
 
 /**
@@ -113,6 +153,74 @@ double initial_mean_anomaly(double lambda, double phi0, double years_before_epoc
  * @return double Mean Anomaly after time t_years
  */
 double mean_anomaly_at_time(double t_years, double period, double M0);
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbital velocity — vis-viva equation
+   ───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * @brief Orbital speed in AU/yr via the vis-viva equation.
+ * 
+ * v=sqrt(GM*(2/r - 1/a))
+ * In solar units: GM = 4pi^2*M_star
+ * 
+ * @param r Current distance from star (AU)
+ * @param a Semi-major axis (AU)
+ * @param M_Star Stellar mass (Solar Masses)
+ * @return double Orbital Speed (in AU/yr)
+ */
+double orbital_velocity_au_yr(double r, double a,double M_Star);
+
+
+/**
+ * @brief Orbital speed in km/s via the vis-viva equation
+ * 
+ * Same as orbital_velocity_au_yr, multiplied by the conversion factor
+ * 1 AU/yr = 4.74047 km/s.4
+ * 
+ * @param r Current distance from the star (AU)
+ * @param a Semi-major axis (AU)
+ * @param M_Star Stellar mass (solar masses)
+ * @return double  Orbital speed (km/s)
+ */
+double orbital_velocity_km_s(double r, double a, double M_Star);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orbit progress tracking
+   ───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * @brief Time elapsed within the current orbit (years).
+ * 
+ * Accounts for the initial mean anomaly offset M0, then returns
+ * (t - t_offset) mod period, always in [0, period).
+ * 
+ * @param t_years   Current simulation time (years)
+ * @param period    Orbital period (years)
+ * @param M0        Initial mean anomaly (radians)
+ * @return double   Time into the current orbit (years), in [0, period)
+ */
+double time_in_current_orbit(double t_years, double period, double M0);
+
+
+/**
+ * @brief Percentage of the current orbit completed.
+ * 
+ * Returns a value in [0, 100).
+ * 0 = at periapsis start, 50 = halfway, approaching 100 = nearly full orbit.
+ * 
+ * @param t_years    Current simulation time (years)
+ * @param period     Orbital period (years)
+ * @param M0         Initial mean anomaly (radians)
+ * @return double    Orbit completion percentage [0, 100)
+ */
+double orbit_progress(double t_years, double period, double M0);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Composite helpers
+   ───────────────────────────────────────────────────────────────────────────*/
+
 
 /**
  * @brief Compute (x, y) position of a planet at time t_years.

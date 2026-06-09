@@ -12,6 +12,7 @@ shared library, called from a Python/Tkinter GUI via `ctypes`.
 - Auto-fills orbital period via Kepler's 3rd law
 - Auto-fills semi-major axis via Kepler's 3rd law
 - Change the stellar object mass and auto-update orbit periods accordingly
+- 2D orbital parameter calculation and display on collapsible panel.
 
 ## Build & Run
 ```bash
