@@ -68,3 +68,6 @@ __pycache__/
 # Editor clutter
 .vscode/
 *.swp
+
+#Other things
+*.directory
